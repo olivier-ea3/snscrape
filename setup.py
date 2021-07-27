@@ -17,6 +17,7 @@ setuptools.setup(
 	use_scm_version = True,
 	install_requires = [
 		'requests[socks]',
+		'torpy[requests]',
 		'lxml',
 		'beautifulsoup4',
 		'pytz; python_version < "3.9.0"',
@@ -24,6 +25,7 @@ setuptools.setup(
 	python_requires = '~=3.8',
 	extras_require = {
 		'test': ['coverage'],
+		'dev': ['flake8', 'isort', 'black', 'mypy']
 	},
 	entry_points = {
 		'console_scripts': [

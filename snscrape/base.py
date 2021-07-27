@@ -8,6 +8,8 @@ import logging
 import requests
 import time
 import warnings
+from torpy import TorClient
+from torpy.http.adapter import TorHttpAdapter
 
 
 logger = logging.getLogger(__name__)
@@ -130,9 +132,13 @@ class Scraper:
 
 	name = None
 
-	def __init__(self, retries = 3):
+	def __init__(self, retries = 3, use_tor=True):
 		self._retries = retries
 		self._session = requests.Session()
+		_tor = TorClient()
+		_guard = _tor.get_guard()
+		self._adapter = TorHttpAdapter(_guard, 3, retries=retries)
+		self._use_tor = use_tor
 
 	@abc.abstractmethod
 	def get_items(self):
@@ -152,6 +158,10 @@ class Scraper:
 	def _request(self, method, url, params = None, data = None, headers = None, timeout = 10, responseOkCallback = None, allowRedirects = True):
 		for attempt in range(self._retries + 1):
 			# The request is newly prepared on each retry because of potential cookie updates.
+			if self._use_tor:
+				logger.info(f'TOR is activated')
+				self._session.mount('http://', self._adapter)
+				self._session.mount('https://', self._adapter)
 			req = self._session.prepare_request(requests.Request(method, url, params = params, data = data, headers = headers))
 			logger.info(f'Retrieving {req.url}')
 			logger.debug(f'... with headers: {headers!r}')
@@ -175,7 +185,7 @@ class Scraper:
 				msg = f': {msg}' if msg else ''
 
 				if success:
-					logger.debug(f'{req.url} retrieved successfully{msg}')
+					logger.info(f'{req.url} retrieved successfully{msg} - {r.raw._connection.sock.getsockname()}')
 					return r
 				else:
 					if attempt < self._retries:
