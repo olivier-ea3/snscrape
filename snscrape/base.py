@@ -132,13 +132,12 @@ class Scraper:
 
 	name = None
 
-	def __init__(self, retries = 3, use_tor=True):
+	def __init__(self, retries = 3, use_tor=False):
 		self._retries = retries
 		self._session = requests.Session()
-		_tor = TorClient()
-		_guard = _tor.get_guard()
-		self._adapter = TorHttpAdapter(_guard, 3, retries=retries)
 		self._use_tor = use_tor
+		self._guard = None
+		self._tor = None
 
 	@abc.abstractmethod
 	def get_items(self):
@@ -151,17 +150,36 @@ class Scraper:
 		This is the method implemented by subclasses for doing the actual retrieval/entity object creation. For accessing the scraper's entity, use the entity property.'''
 		return None
 
+	def _close_tor_connexion(self):
+		if self._guard:
+			self._guard.close()
+
+		if self._tor:
+			self._tor.close()
+
+	def _activate_tor_proxy(self, hops_count = 2, retries=None):
+		logger.info(f'TOR Proxy Activation')
+		retries = self._retries if not retries else retries
+
+		self._tor = TorClient()
+		self._guard = self._tor.get_guard()
+		self._adapter = TorHttpAdapter(self._guard, hops_count, retries=retries)
+
+		self._session.mount('http://', self._adapter)
+		self._session.mount('https://', self._adapter)
+
 	@functools.cached_property
 	def entity(self):
 		return self._get_entity()
 
 	def _request(self, method, url, params = None, data = None, headers = None, timeout = 10, responseOkCallback = None, allowRedirects = True):
 		for attempt in range(self._retries + 1):
-			# The request is newly prepared on each retry because of potential cookie updates.
 			if self._use_tor:
-				logger.info(f'TOR is activated')
-				self._session.mount('http://', self._adapter)
-				self._session.mount('https://', self._adapter)
+				self._activate_tor_proxy(hops_count=3, retries=1)
+			else:
+				logger.info(f'TOR Proxy is NOT activated')
+			
+			# The request is newly prepared on each retry because of potential cookie updates.
 			req = self._session.prepare_request(requests.Request(method, url, params = params, data = data, headers = headers))
 			logger.info(f'Retrieving {req.url}')
 			logger.debug(f'... with headers: {headers!r}')
@@ -185,7 +203,8 @@ class Scraper:
 				msg = f': {msg}' if msg else ''
 
 				if success:
-					logger.info(f'{req.url} retrieved successfully{msg} - {r.raw._connection.sock.getsockname()}')
+					logger.info(f'{req.url} retrieved successfully{msg}')
+					self._close_tor_connexion()
 					return r
 				else:
 					if attempt < self._retries:
@@ -202,6 +221,7 @@ class Scraper:
 		else:
 			msg = f'{self._retries + 1} requests to {req.url} failed, giving up.'
 			logger.fatal(msg)
+			self._close_tor_connexion()
 			raise ScraperException(msg)
 		raise RuntimeError('Reached unreachable code')
 

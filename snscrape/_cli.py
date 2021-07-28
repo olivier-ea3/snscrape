@@ -204,6 +204,7 @@ def parse_args():
 	parser.add_argument('--dump-locals', dest = 'dumpLocals', action = 'store_true', default = False, help = 'Dump local variables on serious log messages (warnings or higher)')
 	parser.add_argument('--retry', '--retries', dest = 'retries', type = int, default = 3, metavar = 'N',
 		help = 'When the connection fails or the server returns an unexpected response, retry up to N times with an exponential backoff')
+	parser.add_argument('--use-tor', '--tor', dest = 'use_tor', action = 'store_true', default = False, help = 'Use tor proxy')
 	parser.add_argument('-n', '--max-results', dest = 'maxResults', type = lambda x: int(x) if int(x) >= 0 else parser.error('--max-results N must be zero or positive'), metavar = 'N', help = 'Only return the first N results')
 	group = parser.add_mutually_exclusive_group(required = False)
 	group.add_argument('-f', '--format', dest = 'format', type = parse_format, default = None, help = 'Output format')

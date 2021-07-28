@@ -529,7 +529,7 @@ class TwitterSearchScraper(TwitterAPIScraper):
 
 	@classmethod
 	def from_args(cls, args):
-		return cls(args.query, cursor = args.cursor, top = args.top, retries = args.retries)
+		return cls(args.query, cursor = args.cursor, top = args.top, retries = args.retries, use_tor = args.use_tor)
 
 
 class TwitterUserScraper(TwitterSearchScraper):
@@ -605,7 +605,7 @@ class TwitterUserScraper(TwitterSearchScraper):
 
 	@classmethod
 	def from_args(cls, args):
-		return cls(args.username, args.isUserId, retries = args.retries)
+		return cls(args.username, args.isUserId, retries = args.retries, use_tor = args.use_tor)
 
 
 class TwitterProfileScraper(TwitterUserScraper):
@@ -664,7 +664,7 @@ class TwitterHashtagScraper(TwitterSearchScraper):
 
 	@classmethod
 	def from_args(cls, args):
-		return cls(args.hashtag, retries = args.retries)
+		return cls(args.hashtag, retries = args.retries, use_tor = args.use_tor)
 
 
 class TwitterTweetScraperMode(enum.Enum):
@@ -748,7 +748,7 @@ class TwitterTweetScraper(TwitterAPIScraper):
 
 	@classmethod
 	def from_args(cls, args):
-		return cls(args.tweetId, TwitterTweetScraperMode.from_args(args), retries = args.retries)
+		return cls(args.tweetId, TwitterTweetScraperMode.from_args(args), retries = args.retries, use_tor = args.use_tor)
 
 
 class TwitterListPostsScraper(TwitterSearchScraper):
