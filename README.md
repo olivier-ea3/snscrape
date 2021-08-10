@@ -38,7 +38,15 @@ snscrape twitter-user textfiles >twitter-@textfiles
 
 To get the latest 100 tweets with the hashtag #archiveteam:
 
-    snscrape --max-results 100 twitter-hashtag archiveteam
+```bash
+snscrape --max-results 100 twitter-hashtag archiveteam
+```
+
+Use tor proxy to get all tweets from ibmw and save the tweet into a jsonl file named twitter-ibmw-test.jsonl:
+
+```bash
+snscrape -v --use_tor --jsonl twitter-user ibmw >twitter-ibmw-test.jsonl
+```
 
 Other noteworthy options are:
 
